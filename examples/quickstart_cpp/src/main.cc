@@ -6,15 +6,19 @@
 #include "../../../tiny-dnn/tiny_dnn/tiny_dnn.h"
 #include "../../../tiny-dnn/tiny_dnn/io/layer_factory.h"
 
-#include "../train_images_gtsrb_20.cpp"
-#include "../train_labels_gtsrb_20.cpp"
+#include "../gray_train_images.cpp"
+#include "../gray_train_labels.cpp"
 
-extern std::vector<tiny_dnn::vec_t> train_images_data;
-extern std::vector<tiny_dnn::label_t> train_labels_data;
+// #include "half_function.cc"
+
+// extern std::vector<tiny_dnn::vec_t> train_images_data;
+// extern std::vector<tiny_dnn::label_t> train_labels_data;
+
+extern float train_images_data[80*43][45*45];
+extern int train_labels_data[80*43];
 
 #define O true
 #define X false
-
 
 static const bool tbl[] = {
     O, X, X, X, O, O, O, X, X, O, O, O, O, X, O, O,
@@ -37,27 +41,114 @@ int main(int argc, char **argv) {
     const std::string CLIENT_ID = argv[1];
     const std::string SERVER_URL = argv[2];
 
+    int classes = 43;
+    int data_per_class = 80;
+
     // シャッフル
-    std::vector<tiny_dnn::vec_t> train_images, test_images;
-    std::vector<tiny_dnn::label_t> train_labels, test_labels;
-    std::random_device seed_gen;
-    std::mt19937 engine(seed_gen());
+    std::vector<tiny_dnn::vec_t> train_images(data_per_class * classes / 2 * 0.8);
+    std::vector<tiny_dnn::vec_t> test_images(data_per_class * classes / 2 * 0.2);
+    std::vector<tiny_dnn::label_t> train_labels(data_per_class * classes / 2 * 0.8);
+    std::vector<tiny_dnn::label_t> test_labels(data_per_class * classes / 2 * 0.2);
+    // std::random_device seed_gen;
+    // std::mt19937 engine(seed_gen());
+
+    const unsigned int seed = 123;
+    std::mt19937 engine(seed);
+
     std::vector<int> num_list;
-    for (int i=0; i<train_images_data.size(); i++) num_list.push_back(i);
+
+    for (int i=0; i< data_per_class * classes; i++) num_list.push_back(i);
     std::shuffle(num_list.begin(), num_list.end(), engine);
 
-    for(int i = 0;i < num_list.size();i++){
-      if (i % 5 == 0){
-        // test
-        test_images.push_back(train_images_data[num_list[i]]);
-        test_labels.push_back(train_labels_data[num_list[i]]);
-      } else {
-        // train
-        train_images.push_back(train_images_data[num_list[i]]);
-        train_labels.push_back(train_labels_data[num_list[i]]);
-      }
+    // if(CLIENT_ID == "0") {
+    //   printf("Client 0\n");
+    //   for(int i = 0;i < train_images_data.size() / 2;i++){
+    //     if (i % 5 == 0){
+    //       // test
+    //       test_images.push_back(train_images_data[num_list[i]]);
+    //       test_labels.push_back(train_labels_data[num_list[i]]);
+    //     } else {
+    //       // train
+    //       train_images.push_back(train_images_data[num_list[i]]);
+    //       train_labels.push_back(train_labels_data[num_list[i]]);
+    //     }
+    //   }
+    // } else {
+    //   printf("Client 1\n");
+    //   for(int i = train_images_data.size() / 2;i < train_images_data.size();i++){
+    //     if (i % 5 == 0){
+    //       // test
+    //       test_images.push_back(train_images_data[num_list[i]]);
+    //       test_labels.push_back(train_labels_data[num_list[i]]);
+    //     } else {
+    //       // train
+    //       train_images.push_back(train_images_data[num_list[i]]);
+    //       train_labels.push_back(train_labels_data[num_list[i]]);
+    //     }
+    //   }
+    // }
+    int test_index = 0;
+    int train_index = 0;
 
+    if(CLIENT_ID == "0") {
+      printf("Client 0\n");
+      for(int i = 0; i < data_per_class * classes / 2; i++){
+        // printf("i: %d\n", i);
+        // printf("num_list[i]: %d\n", num_list[i]);
+        if (i % 5 == 0){
+          // test
+          test_images[test_index].resize(45 * 45);
+          for(int j = 0; j < 45 * 45; j++){
+            test_images[test_index][j] = train_images_data[num_list[i]][j];
+          }
+          test_labels[test_index] = train_labels_data[num_list[i]];
+          test_index++;
+        } else {
+          // train
+          train_images[train_index].resize(45 * 45);
+          for(int j = 0; j < 45 * 45; j++){
+            train_images[train_index][j] = train_images_data[num_list[i]][j];
+          }
+          train_labels[train_index] = train_labels_data[num_list[i]];
+          train_index++;
+        }
+      }
+    } else {
+      printf("Client 1\n");
+      for(int i = data_per_class * classes / 2; i < data_per_class * classes; i++){
+        if (i % 5 == 0){
+          // test
+          test_images[test_index].resize(45 * 45);
+          for(int j = 0; j < 45 * 45; j++){
+            test_images[test_index][j] = train_images_data[num_list[i]][j];
+          }
+          test_labels[test_index] = train_labels_data[num_list[i]];
+          test_index++;
+        } else {
+          // train
+          train_images[train_index].resize(45 * 45);
+          for(int j = 0; j < 45 * 45; j++){
+            train_images[train_index][j] = train_images_data[num_list[i]][j];
+          }
+          train_labels[train_index] = train_labels_data[num_list[i]];
+          train_index++;
+        }
+      }
     }
+    
+    
+    // for(int i = 0;i < 20 * 43;i++){
+    //   if (i % 5 == 0){
+    //     // test
+    //     test_images.push_back(train_images_data[num_list[i]]);
+    //     test_labels.push_back(train_labels_data[num_list[i]]);
+    //   } else {
+    //     // train
+    //     train_images.push_back(train_images_data[num_list[i]]);
+    //     train_labels.push_back(train_labels_data[num_list[i]]);
+    //   }
+
+    // }
 
     // std::vector<tiny_dnn::vec_t> client_train_images;
     // std::vector<tiny_dnn::label_t> client_train_labels;

@@ -246,7 +246,7 @@ flwr::FitRes Tiny_Dnn_Client::fit(flwr::FitIns ins) {
     this->set_parameters(p);
 
     double learning_rate                   = 0.01;
-    int n_train_epochs                     = 1;
+    int n_train_epochs                     = 10;
     int n_minibatch                        = 32;
     tiny_dnn::core::backend_t backend_type = tiny_dnn::core::default_engine();
 
@@ -254,7 +254,7 @@ flwr::FitRes Tiny_Dnn_Client::fit(flwr::FitIns ins) {
     // float_t train_num_success = 0;
     // float_t train_num_total = 0;
 
-    tiny_dnn::adagrad optimizer;
+    tiny_dnn::gradient_descent optimizer;
 
     // construct_net(this->model, backend_type);
 
@@ -273,18 +273,23 @@ flwr::FitRes Tiny_Dnn_Client::fit(flwr::FitIns ins) {
     auto on_enumerate_epoch = [&]() {
       std::cout << " Epoch " << epoch << "/" << n_train_epochs << " finished. " << t.elapsed() << "s elapsed." << std::endl;
 
-      // lossの計算
+      // // lossの計算
       // std::cout << "calculate loss..." << std::endl;
       // auto train_loss = this->model.get_loss<tiny_dnn::mse>(train_images, train_labels);
       // auto test_loss = this->model.get_loss<tiny_dnn::mse>(test_images, test_labels);
 
-      // // accuracyの計算
+      // accuracyの計算
       // std::cout << "calculate accuracy..." << std::endl;
-      // tiny_dnn::result train_results = this->model.test(train_images, train_labels);
-      // tiny_dnn::result test_results = this->model.test(test_images, test_labels);
-      // float_t train_accuracy = (float_t)train_results.num_success * 100 / train_results.num_total;
-      // float_t test_accuracy = (float_t)test_results.num_success * 100 / test_results.num_total;
 
+      // std::cout << "calculate train accuracy" << std::endl;
+      // tiny_dnn::result train_results = this->model.test(train_images, train_labels);
+      // float_t train_accuracy = (float_t)train_results.num_success * 100 / train_results.num_total;
+      // std::cout << "train accuracy: " << train_accuracy << "% (" << train_results.num_success << "/" << train_results.num_total << ")" << std::endl;
+
+      std::cout << "calculate test accuracy" << std::endl;
+      tiny_dnn::result test_results = this->model.test(test_images, test_labels);
+      float_t test_accuracy = (float_t)test_results.num_success * 100 / test_results.num_total;
+      std::cout << "test accuracy: " << test_accuracy << "% (" << test_results.num_success << "/" << test_results.num_total << ")" << std::endl;
       // std::cout << "train loss: " << train_loss << " test loss: " << test_loss << std::endl;
       // std::cout << "train accuracy: " << train_accuracy << "% test accuracy: " << test_accuracy << "%" << std::endl;
 
@@ -339,26 +344,32 @@ flwr::EvaluateRes Tiny_Dnn_Client::evaluate(flwr::EvaluateIns ins) {
     // float_t test_accuracy = (float_t)test_results.num_success * 100 / test_results.num_total;
     // std::cout << "test accuracy: " << test_accuracy << "%" << std::endl;
     std::cout << "calculate loss..." << std::endl;
-    float_t test_loss = this->model.get_loss<tiny_dnn::mse>(default_test_images, default_test_labels);
-    std::cout << "loss = " << test_loss << std::endl; 
+    // float_t test_loss = this->model.get_loss<tiny_dnn::mse>(default_test_images, default_test_labels);
+    // std::cout << "loss = " << test_loss << std::endl; 
 
     // lossの計算
     // std::cout << "calculate loss..." << std::endl;
-    // auto train_loss = this->model.get_loss<tiny_dnn::mse>(train_images, train_labels);
-    // auto test_loss = this->model.get_loss<tiny_dnn::mse>(test_images, test_labels);
+    std::cout << "calculate train loss" << std::endl;
+    auto train_loss = this->model.get_loss<tiny_dnn::cross_entropy_multiclass>(train_images, train_labels);
 
-    // // accuracyの計算
-    // std::cout << "calculate accuracy..." << std::endl;
-    // tiny_dnn::result train_results = this->model.test(train_images, train_labels);
-    // tiny_dnn::result test_results = this->model.test(test_images, test_labels);
-    // float_t train_accuracy = (float_t)train_results.num_success * 100 / train_results.num_total;
-    // float_t test_accuracy = (float_t)test_results.num_success * 100 / test_results.num_total;
+    std::cout << "calculate test loss" << std::endl;
+    auto test_loss = this->model.get_loss<tiny_dnn::cross_entropy_multiclass>(test_images, test_labels);
 
-    // std::cout << "train loss: " << train_loss << " test loss: " << test_loss << std::endl;
-    // std::cout << "train accuracy: " << train_accuracy << "% test accuracy: " << test_accuracy << "%" << std::endl;
+    // accuracyの計算
+    std::cout << "calculate accuracy..." << std::endl;
+    std::cout << "calculate train accuracy" << std::endl;
+    tiny_dnn::result train_results = this->model.test(train_images, train_labels);
+    
+    std::cout << "calculate test accuracy" << std::endl;
+    tiny_dnn::result test_results = this->model.test(test_images, test_labels);
+    float_t train_accuracy = (float_t)train_results.num_success * 100 / train_results.num_total;
+    float_t test_accuracy = (float_t)test_results.num_success * 100 / test_results.num_total;
+
+    std::cout << "train loss: " << train_loss << " test loss: " << test_loss << std::endl;
+    std::cout << "train accuracy: " << train_accuracy << "% test accuracy: " << test_accuracy << "%" << std::endl;
 
 
-    // // float_t test_accuracy = this->model.calculate(this->default_test_images, this->default_test_labels, test_num_success, test_num_total);
+    // float_t test_accuracy = this->model.calculate(this->default_test_images, this->default_test_labels, test_num_success, test_num_total);
     // std::cout << "Test  Accuracy : " << test_accuracy * 100 << "% (" << test_num_success << "/" << test_num_total << ")" << std::endl;
     // float_t test_loss = this->model.calc_cross_entoropy(this->default_test_images, this->default_test_labels);
     size_t test_size = default_test_images.size();

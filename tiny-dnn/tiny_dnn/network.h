@@ -27,6 +27,20 @@
 #include "../tiny_dnn/nodes.h"
 #include "../tiny_dnn/util/util.h"
 
+#include "half.hpp"
+#include "half_define.h"
+
+using namespace half_float;
+
+// #define LOSS_HALF 1
+
+std::vector<std::vector<std::vector<half>>> three_vector_to_half(const std::vector<tiny_dnn::tensor_t>& array);
+void three_half_to_vector(std::vector<tiny_dnn::tensor_t>& array, std::vector<std::vector<std::vector<half>>> array_half);
+std::vector<std::vector<std::vector<half>>> gradient_half(
+                               const std::vector<std::vector<std::vector<half>>> &y,
+                               const std::vector<std::vector<std::vector<half>>> &t,
+                               const std::vector<std::vector<std::vector<half>>> &t_cost);
+
 namespace tiny_dnn {
 
 enum class content_type {
@@ -177,8 +191,30 @@ class network {
   void bprop(const std::vector<tensor_t> &out,
              const std::vector<tensor_t> &t,
              const std::vector<tensor_t> &t_cost) {
+
+#if LOSS_HALF == 0
     std::vector<tensor_t> delta = gradient<E>(out, t, t_cost);
+#else
+    std::vector<std::vector<std::vector<half>>> out_half = three_vector_to_half(out);
+    std::vector<std::vector<std::vector<half>>> t_half = three_vector_to_half(t);
+    std::vector<std::vector<std::vector<half>>> t_cost_half = three_vector_to_half(t_cost);
+
+    std::vector<std::vector<std::vector<half>>> delta_half = gradient_half(out_half, t_half, t_cost_half);
+
+    std::vector<tensor_t> delta;
+    delta.resize(delta_half.size());
+    for (size_t i = 0; i < delta_half.size(); i++) {
+      delta[i].resize(delta_half[i].size());
+      for (size_t j = 0; j < delta_half[i].size(); j++) {
+        delta[i][j].resize(delta_half[i][j].size());
+      }
+    }
+
+    three_half_to_vector(delta, delta_half);
+#endif
+
     net_.backward(delta);
+
   }
 
   vec_t fprop(const vec_t &in) {
@@ -458,13 +494,29 @@ class network {
     result test_result;
     set_netphase(net_phase::test);
     for (size_t i = 0; i < in.size(); i++) {
+    // for_i(in.size(), [&](size_t i) {
       const label_t predicted = fprop_max_index(in[i]);
       const label_t actual    = t[i];
 
       if (predicted == actual) test_result.num_success++;
       test_result.num_total++;
       test_result.confusion_matrix[predicted][actual]++;
+    // });
+
+      // 進行状況の更新
+      float progress = (i + 1) / float(in.size());
+      int barWidth = 70; // 進行バーの幅
+      std::cout << "[";
+      int pos = barWidth * progress;
+      for (int j = 0; j < barWidth; ++j) {
+        if (j < pos) std::cout << "=";
+        else if (j == pos) std::cout << ">";
+        else std::cout << " ";
+      }
+      std::cout << "] " << int(progress * 100.0) << " %\r";
+      std::cout.flush();
     }
+    std::cout << std::endl;
     set_netphase(net_phase::train);  // push back to train phase
     return test_result;
   }
@@ -497,7 +549,22 @@ class network {
     for (size_t i = 0; i < in.size(); i++) {
       const vec_t predicted = predict(in[i]);
       sum_loss += E::f(predicted, label_tensor[i][0]);
+
+      // 進行状況の更新
+      float progress = (i + 1) / float(in.size());
+      int barWidth = 70; // 進行バーの幅
+      std::cout << "[";
+      int pos = barWidth * progress;
+      for (int j = 0; j < barWidth; ++j) {
+        if (j < pos) std::cout << "=";
+        else if (j == pos) std::cout << ">";
+        else std::cout << " ";
+      }
+      std::cout << "] " << int(progress * 100.0) << " %\r";
+      std::cout.flush();
     }
+
+    std::cout << std::endl;
     set_netphase(net_phase::train);
     return sum_loss / in.size();
   }
@@ -840,8 +907,8 @@ class network {
             typename OnBatchEnumerate,
             typename OnEpochEnumerate>
   bool fit(Optimizer &optimizer,
-           const std::vector<tensor_t> &inputs,
-           const std::vector<tensor_t> &desired_outputs,
+           std::vector<tensor_t> &inputs,
+           std::vector<tensor_t> &desired_outputs,
            size_t batch_size,
            int epoch,
            OnBatchEnumerate on_batch_enumerate,
@@ -875,6 +942,21 @@ class network {
         } */
       }
       on_epoch_enumerate();
+
+      // データのシャッフル
+      std::vector<size_t> indices(inputs.size());
+      std::iota(indices.begin(), indices.end(), 0);
+      // std::shuffle(indices.begin(), indices.end(), std::mt19937());
+      std::mt19937 rng(std::random_device{}());
+      std::shuffle(indices.begin(), indices.end(), rng);
+      std::vector<tensor_t> inputs_shuffled(inputs.size());
+      std::vector<tensor_t> desired_outputs_shuffled(desired_outputs.size());
+      for (size_t i = 0; i < inputs.size(); i++) {
+        inputs_shuffled[i] = inputs[indices[i]];
+        desired_outputs_shuffled[i] = desired_outputs[indices[i]];
+      }
+      inputs = inputs_shuffled;
+      desired_outputs = desired_outputs_shuffled;
     }
     set_netphase(net_phase::test);
     return true;

@@ -26,6 +26,16 @@
 #include "util/image.h"
 #endif
 
+
+#include "half.hpp"
+#include "half_define.h"
+
+using namespace half_float;
+
+// #define MARGE_HALF 0
+
+std::vector<std::vector<half>> two_vector_to_half(const tiny_dnn::tensor_t& array);
+
 namespace tiny_dnn {
 
 class node;
@@ -87,6 +97,8 @@ class edge {
       prev_(prev) {}
 
   void merge_grads(vec_t *dst) {
+#if MARGE_HALF == 0
+#if 1
     assert(!grad_.empty());
     const auto &grad_head = grad_[0];
     size_t sz             = grad_head.size();
@@ -100,6 +112,23 @@ class edge {
       // dst += grad_[sample]
       vectorize::reduce<float_t>(&grad_[sample][0], sz, pdst);
     }
+#else
+    assert(!grad_.empty());
+    const auto &grad_head = grad_[0];
+    size_t sz             = grad_head.size();
+    dst->resize(sz);
+    half_t *pdst = &(*dst)[0];
+    // dst = grad_[0]
+    std::copy(grad_head.begin(), grad_head.end(), pdst);
+    // @todo consider adding parallelism
+    for (size_t sample = 1, sample_count = grad_.size(); sample < sample_count;
+         ++sample) {
+      // dst += grad_[sample]
+      vectorize::reduce<half_t>(&grad_[sample][0], sz, pdst);
+    }
+#endif
+#else
+#endif
   }
 
   void clear_grads() {
