@@ -1,21 +1,47 @@
+// #include "tiny_dnn/tiny_dnn.h"
 #include "../../../tiny-dnn/tiny_dnn/tiny_dnn.h"
 
 std::vector<half> one_vector_to_half(const tiny_dnn::vec_t& array) {
+    // half型で表現可能な最小値を取得
+    float min_half_value = std::numeric_limits<half>::min();
+    float max_half_value = std::numeric_limits<half>::max();
     std::vector<half> array_half(array.size());
-    // for (size_t i = 0; i < array.size(); ++i) {
     tiny_dnn::for_i(array.size(), [&](size_t i) {
-        array_half[i] = half(array[i]);
+        
+        // array[i]が表せる下限の場合0を代入
+        if (array[i] > 0 && array[i] < min_half_value) {
+            array_half[i] = min_half_value;
+        } else if (array[i] < 0 && array[i] > -min_half_value) {
+            array_half[i] = -min_half_value;
+        } else if (array[i] > max_half_value) {
+            array_half[i] = max_half_value;
+        } else if (array[i] < -max_half_value) {
+            array_half[i] = -max_half_value;
+        } else {
+            array_half[i] = half(array[i]);
+        }
     });
-    // }
 
     return array_half;
 }
 
 std::vector<half> one_vector_to_half(const std::vector<size_t>& array) {
+    float min_half_value = std::numeric_limits<half>::min();
+    float max_half_value = std::numeric_limits<half>::max();
     std::vector<half> array_half(array.size());
     // for (size_t i = 0; i < array.size(); ++i) {
     tiny_dnn::for_i(array.size(), [&](size_t i) {
-        array_half[i] = half(array[i]);
+        if (array[i] > 0 && array[i] < min_half_value) {
+            array_half[i] = min_half_value;
+        } else if (array[i] < 0 && array[i] > -min_half_value) {
+            array_half[i] = -min_half_value;
+        } else if (array[i] > max_half_value) {
+            array_half[i] = max_half_value;
+        } else if (array[i] < -max_half_value) {
+            array_half[i] = -max_half_value;
+        } else {
+            array_half[i] = half(array[i]);
+        }
     });
     // }
 
@@ -23,13 +49,26 @@ std::vector<half> one_vector_to_half(const std::vector<size_t>& array) {
 }
 
 std::vector<std::vector<half>> two_vector_to_half(const tiny_dnn::tensor_t& array) {
+    float min_half_value = std::numeric_limits<half>::min();
+    float max_half_value = std::numeric_limits<half>::max();
     std::vector<std::vector<half>> array_half(array.size());
     // for (size_t i = 0; i < array.size(); ++i) {
     tiny_dnn::for_i(array.size(), [&](size_t i) {
         array_half[i].resize(array[i].size());
 
         for (size_t j = 0; j < array[i].size(); ++j) {
-            array_half[i][j] = half(array[i][j]);
+            if (array[i][j] > 0 && array[i][j] < min_half_value) {
+                array_half[i][j] = min_half_value;
+            } else if (array[i][j] < 0 && array[i][j] > -min_half_value) {
+                array_half[i][j] = -min_half_value;
+            } else if (array[i][j] > max_half_value) {
+                array_half[i][j] = max_half_value;
+            } else if (array[i][j] < -max_half_value) {
+                array_half[i][j] = -max_half_value;
+            } else {
+                array_half[i][j] = half(array[i][j]);
+            }
+            // array_half[i][j] = half(array[i][j]);
         }
     });
     // }
@@ -38,13 +77,26 @@ std::vector<std::vector<half>> two_vector_to_half(const tiny_dnn::tensor_t& arra
 }
 
 std::vector<std::vector<half>> two_vector_to_half(const std::vector<std::vector<size_t>>& array) {
+    float min_half_value = std::numeric_limits<half>::min();
+    float max_half_value = std::numeric_limits<half>::max();
     std::vector<std::vector<half>> array_half(array.size());
     // for (size_t i = 0; i < array.size(); ++i) {
     tiny_dnn::for_i(array.size(), [&](size_t i) {
         array_half[i].resize(array[i].size());
 
         for (size_t j = 0; j < array[i].size(); ++j) {
-            array_half[i][j] = half(array[i][j]);
+            if (array[i][j] > 0 && array[i][j] < min_half_value) {
+                array_half[i][j] = min_half_value;
+            } else if (array[i][j] < 0 && array[i][j] > -min_half_value) {
+                array_half[i][j] = -min_half_value;
+            } else if (array[i][j] > max_half_value) {
+                array_half[i][j] = max_half_value;
+            } else if (array[i][j] < -max_half_value) {
+                array_half[i][j] = -max_half_value;
+            } else {
+                array_half[i][j] = half(array[i][j]);
+            }
+            // array_half[i][j] = half(array[i][j]);
         }
     });
     // }
@@ -53,6 +105,8 @@ std::vector<std::vector<half>> two_vector_to_half(const std::vector<std::vector<
 }
 
 std::vector<std::vector<std::vector<half>>> three_vector_to_half(const std::vector<tiny_dnn::tensor_t>& array) {
+    float min_half_value = std::numeric_limits<half>::min();
+    float max_half_value = std::numeric_limits<half>::max();
     std::vector<std::vector<std::vector<half>>> array_half(array.size());
     // for (size_t i = 0; i < array.size(); ++i) {
     tiny_dnn::for_i(array.size(), [&](size_t i) {
@@ -62,7 +116,18 @@ std::vector<std::vector<std::vector<half>>> three_vector_to_half(const std::vect
             array_half[i][j].resize(array[i][j].size());
 
             for (size_t k = 0; k < array[i][j].size(); ++k) {
-                array_half[i][j][k] = half(array[i][j][k]);
+                if (array[i][j][k] > 0 && array[i][j][k] < min_half_value) {
+                    array_half[i][j][k] = min_half_value;
+                } else if (array[i][j][k] < 0 && array[i][j][k] > -min_half_value) {
+                    array_half[i][j][k] = -min_half_value;
+                } else if (array[i][j][k] > max_half_value) {
+                    array_half[i][j][k] = max_half_value;
+                } else if (array[i][j][k] < -max_half_value) {
+                    array_half[i][j][k] = -max_half_value;
+                } else {
+                    array_half[i][j][k] = half(array[i][j][k]);
+                }
+                // array_half[i][j][k] = half(array[i][j][k]);
             }
         }
     });
@@ -117,6 +182,38 @@ void vector_div_half(std::vector<half> &x, half denom) {
                  [=](half x) { return x / denom; });
 }
 
+
+
+void moments_impl_calc_mean_half(size_t num_examples,
+                                  size_t channels,
+                                  size_t spatial_dim,
+                                  const std::vector<std::vector<half>> &in,
+                                  tiny_dnn::vec_t &mean) {
+    // 全てのチャネルについて0で初期化
+    mean.clear();
+    mean.resize(channels, 0.0f);
+
+    for (size_t i = 0; i < num_examples; i++) {
+        for (size_t j = 0; j < channels; j++) {
+            // 現在のチャネルの平均値を取得
+            float &rmean = mean[j];
+            const auto it = in[i].begin() + (j * spatial_dim);
+
+            // spatial_dimの範囲にわたる値の合計を計算し、rmeanに加算
+            rmean += std::accumulate(it, it + spatial_dim, 0.0f,
+                                     [](float sum, half value) {
+                                         // half型のvalueをfloatにキャストして加算
+                                         return sum + static_cast<float>(value);
+                                     });
+        }
+    }
+
+    // 各チャネルの平均値を計算
+    for (float &rmean : mean) {
+        rmean /= static_cast<float>(num_examples * spatial_dim);
+    }
+}
+
 void moments_impl_calc_mean_half(size_t num_examples,
                             size_t channels,
                             size_t spatial_dim,
@@ -137,15 +234,21 @@ void moments_impl_calc_variance(size_t num_examples,
                                 const std::vector<std::vector<half>> &in,
                                 const std::vector<half> &mean,
                                 std::vector<half> &variance) {
+  
+  std::vector<half> variance_copy = variance;
   assert(mean.size() >= channels);
   for (size_t i = 0; i < num_examples; i++) {
     for (size_t j = 0; j < channels; j++) {
       half &rvar    = variance[j];
       const auto it    = in[i].begin() + (j * spatial_dim);
       const half ex = mean[j];
+      // rvar             = std::accumulate(it, it + spatial_dim, rvar,
+      //                        [ex](half current, half x) {
+      //                          return current + pow(x - ex, half{2.0});
+      //                        });
       rvar             = std::accumulate(it, it + spatial_dim, rvar,
                              [ex](half current, half x) {
-                               return current + pow(x - ex, half{2.0});
+                               return current + (x - ex, half{2.0}) * (x - ex, half{2.0});
                              });
     }
   }
@@ -153,11 +256,61 @@ void moments_impl_calc_variance(size_t num_examples,
   //   variance,
   //   std::max(half{1.0f}, half(num_examples * spatial_dim) - half{1.0f}));
 
+  // printf("num_examples * spatial_dim: %d\n", num_examples * spatial_dim);
+  int flag = 0;
+  for (size_t i = 0; i < variance.size(); ++i) {
+    if (std::isnan(variance[i])) {
+      printf("variance[%d]: %f, variance_copy[%d]: %f\n", i, static_cast<float>(variance[i]), i, static_cast<float>(variance_copy[i]));
+      flag = 1;
+    }
+  }
+
+  if (flag == 1) {
+    // システムを停止
+    exit(1);
+  }
+
+
   if (half(num_examples * spatial_dim) - half{1.0f} < half{1.0f}) {
     vector_div_half(variance, half{1.0f});
   } else {
     vector_div_half(variance, half(num_examples * spatial_dim) - half{1.0f});
   }
+}
+
+void moments_impl_calc_variance(size_t num_examples,
+                                      size_t channels,
+                                      size_t spatial_dim,
+                                      const std::vector<std::vector<half>> &in,
+                                      const tiny_dnn::vec_t &mean,
+                                      tiny_dnn::vec_t &variance) {
+    // 分散を0で初期化
+    variance.clear();
+    variance.resize(channels, 0.0f);
+
+    for (size_t i = 0; i < num_examples; i++) {
+        for (size_t j = 0; j < channels; j++) {
+            const auto it = in[i].begin() + (j * spatial_dim);
+            const float ex = mean[j];
+
+            // 分散の計算
+            variance[j] += std::accumulate(it, it + spatial_dim, 0.0f,
+                                           [ex](float accum, half val) {
+                                               float diff = static_cast<float>(val) - ex;
+                                               return accum + diff * diff;
+                                           });
+        }
+    }
+
+    // 分散をサンプル数で正規化
+    float denom = static_cast<float>(num_examples * spatial_dim) - 1.0f;
+    if (denom < 1.0f) {
+        denom = 1.0f; // サンプル数が1の場合の処理
+    }
+
+    for (float &val : variance) {
+        val /= denom;
+    }
 }
 
 void moments_half(const std::vector<std::vector<half>> &in,
@@ -179,8 +332,44 @@ void moments_half(const std::vector<std::vector<half>> &in,
 void moments_half(const std::vector<std::vector<half>> &in,
                     size_t spatial_dim,
                     size_t channels,
+                    tiny_dnn::vec_t &mean) {
+  const size_t num_examples = in.size();
+  assert(in[0].size() == spatial_dim * channels);
+
+  mean.resize(channels);
+  // vectorize::fill(&mean[0], mean.size(), float_t{0.0});
+  for (size_t i = 0; i < mean.size(); ++i) {
+    mean[i] = 0.0;
+  }
+  moments_impl_calc_mean_half(num_examples, channels, spatial_dim, in, mean);
+  vector_div(mean, num_examples * spatial_dim);
+}
+
+void moments_half(const std::vector<std::vector<half>> &in,
+                    size_t spatial_dim,
+                    size_t channels,
                     std::vector<half> &mean,
                     std::vector<half> &variance) {
+  const size_t num_examples = in.size();
+  assert(in[0].size() == spatial_dim * channels);
+
+  // calc mean
+  moments_half(in, spatial_dim, channels, mean);
+
+  variance.resize(channels);
+  // vectorize::fill(&variance[0], variance.size(), float_t{0.0});
+  for (size_t i = 0; i < variance.size(); ++i) {
+    variance[i] = half(0.0);
+  }
+  moments_impl_calc_variance(num_examples, channels, spatial_dim, in,
+                                     mean, variance);
+}
+
+void moments_half(const std::vector<std::vector<half>> &in,
+                    size_t spatial_dim,
+                    size_t channels,
+                    tiny_dnn::vec_t &mean,
+                    tiny_dnn::vec_t &variance) {
   const size_t num_examples = in.size();
   assert(in[0].size() == spatial_dim * channels);
 
