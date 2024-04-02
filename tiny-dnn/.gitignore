@@ -221,3 +221,5 @@ CMakeFiles*
 build*
 DartConfiguration.tcl
 
+# data directory in examples/quickstart_cpp
+examples/quickstart_cpp/data/

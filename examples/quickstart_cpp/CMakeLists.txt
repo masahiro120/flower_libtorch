@@ -5,9 +5,14 @@ project(SimpleCppFlowerClient VERSION 0.10
 set(CMAKE_CXX_STANDARD 17)
 set(ABSL_PROPAGATE_CXX_STD ON)
 
+# libtorchのパスをCMakeのプレフィックスパスに追加
+list(APPEND CMAKE_PREFIX_PATH "/home/hasumi/libtorch_tmp/pytorch/")
+
+# libtorchを見つける
+find_package(Torch REQUIRED)
+
 ######################
 ### Download gRPC 
-
 include(FetchContent)
 FetchContent_Declare(
   gRPC
@@ -27,10 +32,8 @@ else()
     set(_GRPC_CPP_PLUGIN_EXECUTABLE $<TARGET_FILE:grpc_cpp_plugin>)
 endif()
 
-
 ######################
 ### FLWR_GRPC_PROTO
-
 get_filename_component(FLWR_PROTO "../../src/proto/flwr/proto/transport.proto" ABSOLUTE)
 get_filename_component(FLWR_PROTO_PATH "${FLWR_PROTO}" PATH)
 
@@ -68,7 +71,6 @@ target_link_libraries(flwr_grpc_proto
 
 ######################
 ### FLWR_LIB
-
 file(GLOB FLWR_SRCS "../../src/cc/flwr/src/*.cc")
 set(FLWR_INCLUDE_DIR "../../src/cc/flwr/include")
 
@@ -85,7 +87,79 @@ target_link_libraries(flwr
 
 ######################
 ### FLWR_CLIENT
-file(GLOB FLWR_CLIENT_SRCS src/*.cc)
+# ソースファイルを明示的に指定します。
+set(FLWR_CLIENT_SRCS 
+    src/main.cc
+    src/pointnet_model.cpp
+    src/libtorch_client.cpp
+    src/input_transform.cpp
+    data/train_data.cpp
+    data/train_label.cpp
+    data/test_data.cpp
+    data/test_label.cpp
+    data/check_train_data.cpp
+    data/check_train_label.cpp
+    
+    params_data/test_data_params_bn_1_bias.cpp
+    params_data/test_data_params_bn_1_weight.cpp
+    params_data/test_data_params_bn_2_bias.cpp
+    params_data/test_data_params_bn_2_weight.cpp
+    params_data/test_data_params_bn_3_bias.cpp
+    params_data/test_data_params_bn_3_weight.cpp
+    params_data/test_data_params_bn_4_bias.cpp
+    params_data/test_data_params_bn_4_weight.cpp
+    params_data/test_data_params_bn_5_bias.cpp
+    params_data/test_data_params_bn_5_weight.cpp
+    params_data/test_data_params_bn_6_bias.cpp
+    params_data/test_data_params_bn_6_weight.cpp
+    params_data/test_data_params_conv_1_bias.cpp
+    params_data/test_data_params_conv_1_weight.cpp
+    params_data/test_data_params_conv_2_bias.cpp
+    params_data/test_data_params_conv_2_weight.cpp
+    params_data/test_data_params_conv_3_bias.cpp
+    params_data/test_data_params_conv_3_weight.cpp
+    params_data/test_data_params_conv_4_bias.cpp
+    params_data/test_data_params_conv_4_weight.cpp
+    params_data/test_data_params_fc_1_bias.cpp
+    params_data/test_data_params_fc_1_weight.cpp
+    params_data/test_data_params_fc_2_bias.cpp
+    params_data/test_data_params_fc_2_weight.cpp
+    params_data/test_data_params_feature_transform_bn_1_bias.cpp
+    params_data/test_data_params_feature_transform_bn_1_weight.cpp
+    params_data/test_data_params_feature_transform_bn_2_bias.cpp
+    params_data/test_data_params_feature_transform_bn_2_weight.cpp
+    params_data/test_data_params_feature_transform_bn_3_bias.cpp
+    params_data/test_data_params_feature_transform_bn_3_weight.cpp
+    params_data/test_data_params_feature_transform_conv_1_bias.cpp
+    params_data/test_data_params_feature_transform_conv_1_weight.cpp
+    params_data/test_data_params_feature_transform_conv_2_bias.cpp
+    params_data/test_data_params_feature_transform_conv_2_weight.cpp
+    params_data/test_data_params_feature_transform_conv_3_bias.cpp
+    params_data/test_data_params_feature_transform_conv_3_weight.cpp
+    params_data/test_data_params_feature_transform_fc_1_bias.cpp
+    params_data/test_data_params_feature_transform_fc_1_weight.cpp
+    params_data/test_data_params_feature_transform_fc_2_bias.cpp
+    params_data/test_data_params_feature_transform_fc_2_weight.cpp
+    params_data/test_data_params_input_transform_bn_1_bias.cpp
+    params_data/test_data_params_input_transform_bn_1_weight.cpp
+    params_data/test_data_params_input_transform_bn_2_bias.cpp
+    params_data/test_data_params_input_transform_bn_2_weight.cpp
+    params_data/test_data_params_input_transform_bn_3_bias.cpp
+    params_data/test_data_params_input_transform_bn_3_weight.cpp
+    params_data/test_data_params_input_transform_conv_1_bias.cpp
+    params_data/test_data_params_input_transform_conv_1_weight.cpp
+    params_data/test_data_params_input_transform_conv_2_bias.cpp
+    params_data/test_data_params_input_transform_conv_2_weight.cpp
+    params_data/test_data_params_input_transform_conv_3_bias.cpp
+    params_data/test_data_params_input_transform_conv_3_weight.cpp
+    params_data/test_data_params_input_transform_fc_1_bias.cpp
+    params_data/test_data_params_input_transform_fc_1_weight.cpp
+    params_data/test_data_params_input_transform_fc_2_bias.cpp
+    params_data/test_data_params_input_transform_fc_2_weight.cpp
+    params_data/test_data_params_last_bias.cpp
+    params_data/test_data_params_last_weight.cpp
+)
+
 set(EXECUTABLE_NAME flwr_client)
 add_executable(${EXECUTABLE_NAME} ${FLWR_CLIENT_SRCS})
 
@@ -96,4 +170,5 @@ target_include_directories(${EXECUTABLE_NAME} PUBLIC
 
 target_link_libraries(${EXECUTABLE_NAME}
   flwr
+  "${TORCH_LIBRARIES}" # LibTorchライブラリをリンク
 )
