@@ -11,10 +11,10 @@
 
 // #include "half_function.cc"
 
-extern float train_dataset[1622][2048][3];
-extern int train_labelset[1622];
-extern float test_dataset[405][2048][3];
-extern int test_labelset[405];
+extern float train_dataset[2048][2048][3];
+extern int train_labelset[2048];
+extern float test_dataset[420][2048][3];
+extern int test_labelset[420];
 
 int DATA_SIZE = 100;
 
